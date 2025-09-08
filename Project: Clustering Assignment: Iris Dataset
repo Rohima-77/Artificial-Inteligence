@@ -1,0 +1,109 @@
+https://colab.research.google.com/drive/1kp3hOtnOmtFGfwpjrJddoYB_96EI9gvP?usp=sharing
+
+
+
+# Step‑1: প্রয়োজনীয় লাইব্রেরি ইমপোর্ট
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.datasets import load_iris
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans, DBSCAN
+from sklearn.metrics import adjusted_rand_score
+from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
+
+# Step‑2: Iris dataset লোড
+iris = load_iris()
+df = pd.DataFrame(iris.data, columns=iris.feature_names)
+df['species'] = iris.target  # তুলনার উদ্দেশ্যে যুক্ত করলাম
+
+# clustering এর জন্য শুধু ফিচার নেওয়া (species বাদ)
+X = df.drop('species', axis=1)
+
+# Step‑3: Missing values চেক
+print("Missing values per column:\n", X.isnull().sum())
+
+# Step‑4: Feature স্কেল করা
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Step‑5: EDA — Pairplot (species সহ)
+sns.pairplot(df, hue='species')
+plt.suptitle("Pairplot of Iris Features", y=1.02)
+plt.show()
+
+# Correlation Heatmap
+plt.figure(figsize=(8, 6))
+sns.heatmap(df.corr(), annot=True, cmap='coolwarm')
+plt.title("Correlation Heatmap")
+plt.show()
+
+# Step‑6: K‑Means ও Elbow Method ব্যবহার
+inertia = []
+K = range(1, 11)
+for k in K:
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    kmeans.fit(X_scaled)
+    inertia.append(kmeans.inertia_)
+
+plt.plot(K, inertia, marker='o')
+plt.xlabel('Number of clusters (k)')
+plt.ylabel('Inertia')
+plt.title('Elbow Method For Optimal k')
+plt.grid(True)
+plt.show()
+
+# Elbow থেকে k = 3 নির্বাচন
+kmeans = KMeans(n_clusters=3, random_state=42)
+kmeans_labels = kmeans.fit_predict(X_scaled)
+
+# PCA ভিজুয়ালাইজেশন
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X_scaled)
+
+plt.figure(figsize=(8, 6))
+plt.scatter(X_pca[:, 0], X_pca[:, 1], c=kmeans_labels, cmap='viridis', s=50)
+plt.title("K‑Means Clustering Result (k=3)")
+plt.xlabel("PCA Component 1")
+plt.ylabel("PCA Component 2")
+plt.show()
+
+# Step‑7: Hierarchical Clustering ও Dendrogram
+linked = linkage(X_scaled, method='ward')
+plt.figure(figsize=(10, 6))
+dendrogram(linked, truncate_mode='level', p=5)
+plt.title("Dendrogram (Hierarchical Clustering)")
+plt.xlabel("Samples")
+plt.ylabel("Distance")
+plt.show()
+
+# ধরে নেওয়া হলো 3 ক্লাস্টার
+hier_labels = fcluster(linked, 3, criterion='maxclust')
+
+plt.figure(figsize=(8, 6))
+plt.scatter(X_pca[:, 0], X_pca[:, 1], c=hier_labels, cmap='rainbow', s=50)
+plt.title("Hierarchical Clustering (3 clusters)")
+plt.xlabel("PCA Component 1")
+plt.ylabel("PCA Component 2")
+plt.show()
+
+# Step‑8: DBSCAN ক্লাস্টারিং
+# সাধারণত k‑distance গ্রাফ দেখা উচিত eps ঠিক করতে, এখানে ধরা হলো eps = 0.6
+dbscan = DBSCAN(eps=0.6, min_samples=5)
+db_labels = dbscan.fit_predict(X_scaled)
+
+plt.figure(figsize=(8, 6))
+plt.scatter(X_pca[:, 0], X_pca[:, 1], c=db_labels, cmap='plasma', s=50)
+plt.title("DBSCAN Clustering")
+plt.xlabel("PCA Component 1")
+plt.ylabel("PCA Component 2")
+plt.show()
+
+# Step‑9: Evaluation (Adjusted Rand Index)
+true_labels = df['species']
+print("ARI (K‑Means):", adjusted_rand_score(true_labels, kmeans_labels))
+print("ARI (Hierarchical):", adjusted_rand_score(true_labels, hier_labels))
+print("ARI (DBSCAN):", adjusted_rand_score(true_labels, db_labels))
