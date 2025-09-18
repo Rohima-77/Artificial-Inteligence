@@ -1,0 +1,90 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import tensorflow as tf
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Flatten, Dropout, BatchNormalization
+from tensorflow.keras.utils import to_categorical
+
+# Import required library
+from tensorflow.keras.datasets import mnist
+
+# Load the dataset
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+# Import required library
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras.utils import to_categorical
+
+# Load the MNIST data
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+# Normalize input data to range [0, 1]
+x_train = x_train.astype('float32') / 255.0
+x_test = x_test.astype('float32') / 255.0
+
+# Flatten images from (28, 28) to (784,)
+x_train = x_train.reshape(-1, 28*28)
+x_test = x_test.reshape(-1, 28*28)
+
+# Convert labels to one-hot vectors
+y_train = to_categorical(y_train, 10)
+y_test = to_categorical(y_test, 10)
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Flatten, Dropout, BatchNormalization
+
+model = Sequential([
+    Dense(256, activation='relu', input_shape=(784,)),
+    BatchNormalization(),
+    Dropout(0.3),
+
+    Dense(128, activation='relu'),
+    BatchNormalization(),
+    Dropout(0.3),
+
+    Dense(64, activation='relu'),
+
+    Dense(10, activation='softmax')
+])
+
+# Compile the model
+model.compile(
+    optimizer='adam',
+    loss='categorical_crossentropy',
+    metrics=['accuracy']
+)
+
+# Train the model and store history
+history = model.fit(
+    x_train, y_train,
+    epochs=15,
+    batch_size=128,
+    validation_split=0.2,
+    verbose=2
+)
+
+import matplotlib.pyplot as plt
+
+# Plot Accuracy
+plt.plot(history.history['accuracy'], label='Train Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+plt.title('Model Accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Optional: Plot Loss
+plt.plot(history.history['loss'], label='Train Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title('Model Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+test_loss, test_accuracy = model.evaluate(x_test, y_test, verbose=0)
+print(f"\n Final Test Accuracy: {test_accuracy:.4f}")
