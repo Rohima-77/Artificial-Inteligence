@@ -1,3 +1,5 @@
+https://colab.research.google.com/drive/18gWNo7mKW4sUhfHIBvDdThSFHJr6l2oI?usp=sharing
+
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
